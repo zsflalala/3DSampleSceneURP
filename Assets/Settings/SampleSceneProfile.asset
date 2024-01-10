@@ -1,0 +1,287 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7893295128165547882
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b2db86121404754db890f4c8dfe81b2, type: 3}
+  m_Name: Bloom
+  m_EditorClassIdentifier: 
+  active: 0
+  threshold:
+    m_OverrideState: 1
+    m_Value: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  scatter:
+    m_OverrideState: 1
+    m_Value: 0.7
+  clamp:
+    m_OverrideState: 0
+    m_Value: 65472
+  tint:
+    m_OverrideState: 0
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  highQualityFiltering:
+    m_OverrideState: 0
+    m_Value: 1
+  skipIterations:
+    m_OverrideState: 0
+    m_Value: 1
+  dirtTexture:
+    m_OverrideState: 0
+    m_Value: {fileID: 0}
+    dimension: 1
+  dirtIntensity:
+    m_OverrideState: 0
+    m_Value: 0
+--- !u!114 &-7011558710299706105
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899c54efeace73346a0a16faa3afe726, type: 3}
+  m_Name: Vignette
+  m_EditorClassIdentifier: 
+  active: 0
+  color:
+    m_OverrideState: 0
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
+  center:
+    m_OverrideState: 0
+    m_Value: {x: 0.5, y: 0.5}
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0.25
+  smoothness:
+    m_OverrideState: 1
+    m_Value: 0.4
+  rounded:
+    m_OverrideState: 0
+    m_Value: 0
+--- !u!114 &-2815162597246654435
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b552282c47d86e149ad565761ae9ebca, type: 3}
+  m_Name: VolumetricCloud
+  m_EditorClassIdentifier: 
+  active: 1
+  colorBright:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 0.99433964, b: 0.99433964, a: 1}
+  colorCentral:
+    m_OverrideState: 1
+    m_Value: {r: 0.8962264, g: 0.7960837, b: 0.35849053, a: 1}
+  colorDark:
+    m_OverrideState: 1
+    m_Value: {r: 0.745283, g: 0.745283, b: 0.745283, a: 1}
+  colorCentralOffset:
+    m_OverrideState: 1
+    m_Value: 0.5
+  center:
+    m_OverrideState: 1
+    m_Value: {x: 23.82, y: 86.1, z: 15.2}
+  dimensions:
+    m_OverrideState: 1
+    m_Value: {x: 139.5, y: 80, z: 40}
+  blueNoise:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: d25158ef7a361f6409bbeb2b86bb2118, type: 3}
+  noise2DA:
+    m_OverrideState: 0
+    m_Value: {fileID: 2800000, guid: 973846f3b85e02e4091212ce7ceaef11, type: 3}
+  maskNoise:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: 51a3d5f1674d5d14ba088fd973bdd0cf, type: 3}
+  noise3DA:
+    m_OverrideState: 1
+    m_Value: {fileID: 11700000, guid: b488d6499b912854d874bf66ccbeb83a, type: 2}
+  noise3DB:
+    m_OverrideState: 1
+    m_Value: {fileID: 11700000, guid: 4ed99a7ccafd728408a1bd580f472384, type: 2}
+  weatherMap:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: 5e469f7849fcc7649a82914aeb729aef, type: 3}
+  heightCurveA:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: 264aaa5b9997ef44782eb325d5926764, type: 3}
+  heightCurveB:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: ea3297cd83fe7b74eafa32fceaf54569, type: 3}
+  noise2DaSpeed:
+    m_OverrideState: 1
+    m_Value: 0.02
+  noise3DaSpeed:
+    m_OverrideState: 1
+    m_Value: 0.02
+  noise2DWeight:
+    m_OverrideState: 1
+    m_Value: 0.322
+  rayOffsetStrength:
+    m_OverrideState: 1
+    m_Value: 5.2
+  stepCount:
+    m_OverrideState: 1
+    m_Value: 32
+  heightCurveWeight:
+    m_OverrideState: 1
+    m_Value: 0.505
+  densityScale3D:
+    m_OverrideState: 1
+    m_Value: 0.5
+  densityNoiseScale:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1, z: 1}
+  densityNoiseOffset:
+    m_OverrideState: 1
+    m_Value: {x: 0, y: 0, z: 0}
+  phaseParams:
+    m_OverrideState: 1
+    m_Value: {x: -0.5, y: -0.7, z: 0.78, w: 1}
+  henyeyBlend:
+    m_OverrideState: 1
+    m_Value: 0.366
+  henyeyG:
+    m_OverrideState: 1
+    m_Value: -0.09
+  darknessThreshold:
+    m_OverrideState: 1
+    m_Value: 0.536
+  destinyThreshold:
+    m_OverrideState: 1
+    m_Value: 0.46
+  absorption:
+    m_OverrideState: 1
+    m_Value: 1
+  lightMarchStep:
+    m_OverrideState: 1
+    m_Value: 8
+  lightAbsorption:
+    m_OverrideState: 1
+    m_Value: 1.28
+  xy_Speed_zw_Warp:
+    m_OverrideState: 1
+    m_Value: {x: 0, y: 0, z: 1, w: 10}
+  shapeTiling:
+    m_OverrideState: 1
+    m_Value: 0.79
+  detailTiling:
+    m_OverrideState: 1
+    m_Value: -0.02
+  densityMultiplier:
+    m_OverrideState: 1
+    m_Value: 1.56
+  shapeNoiseWeights:
+    m_OverrideState: 1
+    m_Value: {x: -0.17, y: 27.17, z: -3.65, w: -0.08}
+  densityOffset:
+    m_OverrideState: 1
+    m_Value: 29.1
+  detailWeights:
+    m_OverrideState: 1
+    m_Value: -5.54
+  detailNoiseWeight:
+    m_OverrideState: 1
+    m_Value: 0.2
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
+  m_Name: SampleSceneProfile
+  m_EditorClassIdentifier: 
+  components:
+  - {fileID: 849379129802519247}
+  - {fileID: -7893295128165547882}
+  - {fileID: -7011558710299706105}
+  - {fileID: -2815162597246654435}
+  - {fileID: 3824223123683371023}
+--- !u!114 &849379129802519247
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c23e3b12dc18c42a140437e53d3951, type: 3}
+  m_Name: Tonemapping
+  m_EditorClassIdentifier: 
+  active: 0
+  mode:
+    m_OverrideState: 1
+    m_Value: 2
+--- !u!114 &3824223123683371023
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6046cd17276dfc4987444a47c71e3f5, type: 3}
+  m_Name: AtmosphereVolume
+  m_EditorClassIdentifier: 
+  active: 0
+  baseColor:
+    m_OverrideState: 1
+    m_Value: {r: 0.9843138, g: 0.8470589, b: 0.6901961, a: 1}
+  stepCount:
+    m_OverrideState: 1
+    m_Value: 128
+  center:
+    m_OverrideState: 1
+    m_Value: {x: 0, y: 0, z: 0}
+  dimensions:
+    m_OverrideState: 1
+    m_Value: {x: 94, y: 96.7, z: 20.71}
+  densityNoise:
+    m_OverrideState: 1
+    m_Value: {fileID: 11700000, guid: d2993425f654940448af634a1d7cf838, type: 2}
+  heightCurve:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: 264aaa5b9997ef44782eb325d5926764, type: 3}
+  densityNoiseScale:
+    m_OverrideState: 1
+    m_Value: {x: 1.49, y: 1.38, z: 1.3}
+  densityNoiseOffset:
+    m_OverrideState: 1
+    m_Value: {x: 10.89, y: 5.46, z: 0.63}
+  densityThreshold:
+    m_OverrideState: 1
+    m_Value: 0.49
+  densityMultiplier:
+    m_OverrideState: 1
+    m_Value: 1
+  absorption:
+    m_OverrideState: 1
+    m_Value: 1
+  lightAbsorption:
+    m_OverrideState: 1
+    m_Value: 1
+  lightPower:
+    m_OverrideState: 1
+    m_Value: 1

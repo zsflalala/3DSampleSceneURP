@@ -1,0 +1,4 @@
+repository "3DSampleSceneURP@fufuya2023@cloud.cn"
+  path "/"
+    br "/main"
+    co "/main"
