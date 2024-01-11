@@ -26,7 +26,8 @@ Shader "Hidden/RW/VolumetricLight"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            
             // Boilerplate code, we aren't doind anything with our vertices or any other input info,
             // because technically we are working on a quad taking up the whole screen
             struct appdata

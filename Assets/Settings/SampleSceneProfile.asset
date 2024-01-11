@@ -84,121 +84,91 @@ MonoBehaviour:
   active: 1
   colorBright:
     m_OverrideState: 1
-    m_Value: {r: 1, g: 0.99433964, b: 0.99433964, a: 1}
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
   colorCentral:
     m_OverrideState: 1
-    m_Value: {r: 0.8962264, g: 0.7960837, b: 0.35849053, a: 1}
+    m_Value: {r: 0.9245283, g: 0.8578116, b: 0.5704165, a: 1}
   colorDark:
     m_OverrideState: 1
     m_Value: {r: 0.745283, g: 0.745283, b: 0.745283, a: 1}
   colorCentralOffset:
     m_OverrideState: 1
-    m_Value: 0.5
+    m_Value: 0.488
   center:
     m_OverrideState: 1
-    m_Value: {x: 23.82, y: 86.1, z: 15.2}
+    m_Value: {x: -8.93, y: 86.1, z: 15.2}
   dimensions:
     m_OverrideState: 1
-    m_Value: {x: 139.5, y: 80, z: 40}
+    m_Value: {x: 600, y: 400, z: 40}
   blueNoise:
     m_OverrideState: 1
-    m_Value: {fileID: 2800000, guid: d25158ef7a361f6409bbeb2b86bb2118, type: 3}
-  noise2DA:
-    m_OverrideState: 0
-    m_Value: {fileID: 2800000, guid: 973846f3b85e02e4091212ce7ceaef11, type: 3}
-  maskNoise:
+    m_Value: {fileID: 2800000, guid: 12fb9322415d34d43ab7cf3677856f88, type: 3}
+  shapeNoise:
     m_OverrideState: 1
-    m_Value: {fileID: 2800000, guid: 51a3d5f1674d5d14ba088fd973bdd0cf, type: 3}
-  noise3DA:
+    m_Value: {fileID: 11700000, guid: 3d63481784ffeca45b08b60ecf55185c, type: 2}
+  detailNoise:
     m_OverrideState: 1
-    m_Value: {fileID: 11700000, guid: b488d6499b912854d874bf66ccbeb83a, type: 2}
-  noise3DB:
-    m_OverrideState: 1
-    m_Value: {fileID: 11700000, guid: 4ed99a7ccafd728408a1bd580f472384, type: 2}
+    m_Value: {fileID: 11700000, guid: 680d41eeba33be64b8001b377b978579, type: 2}
   weatherMap:
     m_OverrideState: 1
-    m_Value: {fileID: 2800000, guid: 5e469f7849fcc7649a82914aeb729aef, type: 3}
-  heightCurveA:
+    m_Value: {fileID: 2800000, guid: aee0893ba6c26db48bf382c85a0b8d6c, type: 3}
+  maskNoise:
     m_OverrideState: 1
-    m_Value: {fileID: 2800000, guid: 264aaa5b9997ef44782eb325d5926764, type: 3}
-  heightCurveB:
-    m_OverrideState: 1
-    m_Value: {fileID: 2800000, guid: ea3297cd83fe7b74eafa32fceaf54569, type: 3}
-  noise2DaSpeed:
-    m_OverrideState: 1
-    m_Value: 0.02
-  noise3DaSpeed:
-    m_OverrideState: 1
-    m_Value: 0.02
-  noise2DWeight:
-    m_OverrideState: 1
-    m_Value: 0.322
+    m_Value: {fileID: 2800000, guid: f5a0d589b5349ed4fba0e1fc16b3bf67, type: 3}
   rayOffsetStrength:
     m_OverrideState: 1
-    m_Value: 5.2
+    m_Value: 8.3
+  step:
+    m_OverrideState: 0
+    m_Value: 1.9
+  rayStep:
+    m_OverrideState: 0
+    m_Value: 3.35
   stepCount:
     m_OverrideState: 1
-    m_Value: 32
+    m_Value: 72
   heightCurveWeight:
     m_OverrideState: 1
-    m_Value: 0.505
-  densityScale3D:
-    m_OverrideState: 1
-    m_Value: 0.5
-  densityNoiseScale:
-    m_OverrideState: 1
-    m_Value: {x: 1, y: 1, z: 1}
-  densityNoiseOffset:
-    m_OverrideState: 1
-    m_Value: {x: 0, y: 0, z: 0}
+    m_Value: 0.353
   phaseParams:
     m_OverrideState: 1
-    m_Value: {x: -0.5, y: -0.7, z: 0.78, w: 1}
+    m_Value: {x: -0.57, y: 0.91, z: 0.75, w: 1.59}
   henyeyBlend:
     m_OverrideState: 1
-    m_Value: 0.366
-  henyeyG:
-    m_OverrideState: 1
-    m_Value: -0.09
+    m_Value: 0.375
   darknessThreshold:
     m_OverrideState: 1
-    m_Value: 0.536
-  destinyThreshold:
-    m_OverrideState: 1
-    m_Value: 0.46
+    m_Value: 0.435
   absorption:
     m_OverrideState: 1
-    m_Value: 1
-  lightMarchStep:
-    m_OverrideState: 1
-    m_Value: 8
+    m_Value: 1.21
   lightAbsorption:
     m_OverrideState: 1
-    m_Value: 1.28
+    m_Value: 1
   xy_Speed_zw_Warp:
     m_OverrideState: 1
-    m_Value: {x: 0, y: 0, z: 1, w: 10}
+    m_Value: {x: 0.26, y: 0.22, z: 0.37, w: 8.41}
   shapeTiling:
     m_OverrideState: 1
-    m_Value: 0.79
+    m_Value: 0.01
   detailTiling:
     m_OverrideState: 1
-    m_Value: -0.02
+    m_Value: 0.01
   densityMultiplier:
     m_OverrideState: 1
-    m_Value: 1.56
+    m_Value: 2.44
   shapeNoiseWeights:
     m_OverrideState: 1
-    m_Value: {x: -0.17, y: 27.17, z: -3.65, w: -0.08}
+    m_Value: {x: 2.27, y: 0.2, z: 0.17, w: 0.43}
   densityOffset:
     m_OverrideState: 1
-    m_Value: 29.1
+    m_Value: 1.67
   detailWeights:
     m_OverrideState: 1
-    m_Value: -5.54
+    m_Value: 0.4
   detailNoiseWeight:
     m_OverrideState: 1
-    m_Value: 0.2
+    m_Value: 0.67
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
