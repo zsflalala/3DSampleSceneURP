@@ -1,6 +1,10 @@
 Shader "ShengFu/VolumetricCloud"{
     Properties{
         _MainTex("Main Texture", 2D) = "white" {}
+        [Range(RealTime)]_StratusRange ("层云范围", vector) = (0.1, 0.4, 0, 1)
+        [Switch(RealTime)]_StratusFeather ("层云边缘羽化", Range(0, 1)) = 0.2
+        [Range(RealTime)]_CumulusRange ("积云范围", vector) = (0.15, 0.8, 0, 1)
+        [Switch(RealTime)]_CumulusFeather ("积云边缘羽化", Range(0, 1)) = 0.2
     }
     SubShader{
         Tags{
@@ -30,12 +34,14 @@ Shader "ShengFu/VolumetricCloud"{
 
             // Sphere
             float4 _CloudHeightRange;
+            float4 _StratusRange;
+            float _StratusFeather;
+            float4 _CumulusRange;
+            float _CumulusFeather;
 
             // RayMarching
             float _RayOffsetStrength;
             float  _StepCount;
-            float  _step;
-            float  _rayStep;
             float _HeightCurveWeight;
             float _Absorption;
             float _LightAbsorption;
@@ -124,6 +130,71 @@ Shader "ShengFu/VolumetricCloud"{
                 float dstToCloud = max(0, dstA);
                 float dstInCloud = max(0, dstB - dstToCloud);
                 return float2(dstToCloud, dstInCloud);
+            }
+
+            //射线与球体相交, x 到球体最近的距离， y 穿过球体的距离
+            //原理是将射线方程(x = o + dl)带入球面方程求解(|x - c|^2 = r^2)
+            float2 RaySphereDst(float3 sphereCenter, float sphereRadius, float3 pos, float3 rayDir)
+            {
+                float3 oc = pos - sphereCenter;
+                float b = dot(rayDir, oc);
+                float c = dot(oc, oc) - sphereRadius * sphereRadius;
+                float t = b * b - c;//t > 0有两个交点, = 0 相切， < 0 不相交
+                
+                float delta = sqrt(max(t, 0));
+                float dstToSphere = max(-b - delta, 0);
+                float dstInSphere = max(-b + delta - dstToSphere, 0);
+                return float2(dstToSphere, dstInSphere);
+            }
+
+            //射线与云层相交, x到云层的最近距离, y穿过云层的距离
+            //通过两个射线与球体相交进行计算
+            float2 RayCloudLayerDst(float3 sphereCenter, float earthRadius, float heightMin, float heightMax, float3 pos, float3 rayDir, bool isShape = true)
+            {
+                float2 cloudDstMin = RaySphereDst(sphereCenter, heightMin + earthRadius, pos, rayDir);
+                float2 cloudDstMax = RaySphereDst(sphereCenter, heightMax + earthRadius, pos, rayDir);
+                
+                //射线到云层的最近距离
+                float dstToCloudLayer = 0;
+                //射线穿过云层的距离
+                float dstInCloudLayer = 0;
+                
+                //形状步进时计算相交
+                if (isShape)
+                {
+                    
+                    //在地表上
+                    if (pos.y <= heightMin)
+                    {
+                        float3 startPos = pos + rayDir * cloudDstMin.y;
+                        //开始位置在地平线以上时，设置距离
+                        if (startPos.y >= 0)
+                        {
+                            dstToCloudLayer = cloudDstMin.y;
+                            dstInCloudLayer = cloudDstMax.y - cloudDstMin.y;
+                        }
+                        return float2(dstToCloudLayer, dstInCloudLayer);
+                    }
+                    
+                    //在云层内
+                    if (pos.y > heightMin && pos.y <= heightMax)
+                    {
+                        dstToCloudLayer = 0;
+                        dstInCloudLayer = cloudDstMin.y > 0 ? cloudDstMin.x: cloudDstMax.y;
+                        return float2(dstToCloudLayer, dstInCloudLayer);
+                    }
+                    
+                    //在云层外
+                    dstToCloudLayer = cloudDstMax.x;
+                    dstInCloudLayer = cloudDstMin.y > 0 ? cloudDstMin.x - dstToCloudLayer: cloudDstMax.y;
+                }
+                else//光照步进时，步进开始点一定在云层内
+                {
+                    dstToCloudLayer = 0;
+                    dstInCloudLayer = cloudDstMin.y > 0 ? cloudDstMin.x: cloudDstMax.y;
+                }
+                
+                return float2(dstToCloudLayer, dstInCloudLayer);
             }
 
             // Henyey-Greenstein
@@ -244,6 +315,83 @@ Shader "ShengFu/VolumetricCloud"{
                 return lightTransmittance;
             }
 
+            float lightMarching(float sphereCenter,float sphereRadius,float3 position, int stepCount = 8){
+                // URP的主光源位置的定义名字换了一下
+                float3 dirToLight = _MainLightPosition.xyz;
+                float dstInsideCloud = RaySphereDst(sphereCenter, sphereRadius, position, 1 / dirToLight).y;
+
+                // 采样
+                float stepSize = dstInsideCloud / stepCount;
+                float totalDensity = 0;
+                float3 stepVec = dirToLight * stepSize;
+                for(int i = 0; i < stepCount; i ++){
+                    position += stepVec;
+                    totalDensity += max(0, sampleDensity(position) * stepSize);
+                }
+                return totalDensity;
+            }
+
+            //重映射
+            float Remap(float original_value, float original_min, float original_max, float new_min, float new_max)
+            {
+                return new_min + ((original_value - original_min) / (original_max - original_min)) * (new_max - new_min);
+            }
+            
+            //获取高度比率
+            float GetHeightFraction(float3 sphereCenter, float earthRadius, float3 pos, float height_min, float height_max)
+            {
+                float height = length(pos - sphereCenter) - earthRadius;
+                return(height - height_min) / (height_max - height_min);
+            }
+
+            //获取云类型密度
+            float GetCloudTypeDensity(float heightFraction, float cloud_min, float cloud_max, float feather)
+            {
+                //云的底部羽化需要弱一些，所以乘0.5
+                return saturate(Remap(heightFraction, cloud_min, cloud_min + feather * 0.5, 0, 1)) * saturate(Remap(heightFraction, cloud_max - feather, cloud_max, 1, 0));
+            }
+
+            //采样云的密度  isCheaply=true时不采样细节纹理
+            float SampleCloudDensity(float3 sphereCenter,float earthRadius,float3 position)
+            {   
+                float3 stratusInfo = float3(_StratusRange.xy, _StratusFeather);
+                float3 cumulusInfo = float3(_CumulusRange.xy, _CumulusFeather);
+                float heightFraction = GetHeightFraction(sphereCenter, earthRadius, position, _CloudHeightRange.x, _CloudHeightRange.y);
+                
+                //采样天气纹理，默认1000km平铺， r 密度, g 吸收率, b 云类型(0~1 => 层云~积云)
+                // float2 weatherTexUV = GetWeatherTexUV(dsi.sphereCenter, dsi.position, dsi.weatherTexTiling, dsi.weatherTexRepair);
+                // float2 weatherTexUV = position.xz ;
+                // float4 weatherData = tex2Dlod(_WeatherMap,float4(weatherTexUV,0,0));
+                // weatherData.r = Interpolation3(0, weatherData.r, 1, 0.5);
+                // weatherData.b = Interpolation3(0, weatherData.b, 1, 0.5);
+                // if (weatherData.r <= 0)
+                // {
+                //     return 0;
+                // }
+                
+                // //计算云类型密度
+                float stratusDensity = GetCloudTypeDensity(heightFraction, stratusInfo.x, stratusInfo.y, stratusInfo.z);
+                // float cumulusDensity = GetCloudTypeDensity(heightFraction, cumulusInfo.x, cumulusInfo.y, cumulusInfo.z);
+                // float cloudTypeDensity = lerp(stratusDensity, cumulusDensity, weatherData.b);
+                // if (cloudTypeDensity <= 0)
+                // {
+                //     return 0;
+                // }
+                
+                //采样基础纹理
+                float4 baseTex = tex3D(_ShapeNoise,position * _ShapeTiling * 0.01 + _DetailTiling * 0.01);
+                //构建基础纹理的FBM
+                float baseTexFBM = dot(baseTex.gba, float3(0.5, 0.25, 0.125));
+                //对基础形状添加细节，通过Remap可以不影响基础形状下添加细节
+                float baseShape = Remap(baseTex.r, saturate((1.0 - baseTexFBM) * _DetailNoiseWeight), 1.0, 0, 1.0);
+                
+                float cloudDensity = baseTex.r * stratusDensity;
+                
+                float density = cloudDensity * _DensityMultiplier * 0.01;
+                
+                return max(0,baseTex.r - _DetailNoiseWeight);
+            }
+
             struct vertexInput{
                 float4 vertex: POSITION;
                 float2 uv: TEXCOORD0;
@@ -267,7 +415,6 @@ Shader "ShengFu/VolumetricCloud"{
             }
 
             half4 Pixel(vertexOutput IN): SV_TARGET{
-                
                 // 重建世界坐标
                 // float3 worldPosition = GetWorldPosition(IN.pos);
                 // float3 worldPosition = GetWorldPosition(IN.uv,IN.viewDir);
@@ -277,51 +424,59 @@ Shader "ShengFu/VolumetricCloud"{
                 float3 worldViewDir = worldPosition - rayPosition;
                 float3 rayDir = normalize(worldViewDir);
 
-                // 盒型
-                _BoundMin = float3(_Center.x - _Dimensions.x/2 , _Center.y - _Dimensions.z/2 , _Center.z - _Dimensions.y/2);
-                _BoundMax = float3(_Center.x + _Dimensions.x/2 , _Center.y + _Dimensions.z/2 , _Center.z + _Dimensions.y/2);
-                float2 dstCloud = rayBoxDst(_BoundMin, _BoundMax, rayPosition, rayDir);
-
+                float3 cameraPos = GetCameraPositionWS();
+                float  earthRadius = 6300000;   //地球半径在6,357km到6,378km
+                float3 sphereCenter = float3(cameraPos.x, -earthRadius, cameraPos.z); //地球中心坐标, 使水平行走永远不会逃出地球, 高度0为地表
+                float2 dstCloud = RayCloudLayerDst(sphereCenter, earthRadius, _CloudHeightRange.x, _CloudHeightRange.y, cameraPos, IN.viewDir);
                 float dstToCloud = dstCloud.x;
                 float dstInCloud = dstCloud.y;
 
                 float dstToObj = LinearEyeDepth(depth, _ZBufferParams);
-                float dstToOpaque = length(worldViewDir);
+                float endPos = dstToCloud + dstInCloud;  //穿出云覆盖范围的位置(结束位置)
+                
+                // float dstToOpaque = length(worldViewDir);
                 float dstLimit = min(dstToObj - dstToCloud, dstInCloud);
 
-           
                 Light mainLight = GetMainLight();
                 float cosAngle = dot(IN.viewDir, normalize(mainLight.direction));
                 float3 phaseVal = phase(cosAngle); //当前视角方向和灯光方向而得出的米氏散射近似结果(云的白色)
 
-                const float stepCount = 64;
-                float3 entryPoint = rayPosition + rayDir * dstToCloud;
+                float3 entryPoint = cameraPos + rayDir * dstToCloud;
                 float3 currentPoint = entryPoint;
-		        // float stepSize = exp(_step)*_rayStep;
                 float stepSize = dstInCloud / _StepCount; 
                 float3 stepVec = stepSize * rayDir;
-                // 添加抖动
                 float buleNoise = tex2Dlod(_BlueNoise,float4(squareUV(IN.uv*3),0,0)).r;
-                float dstTravelled = buleNoise * _RayOffsetStrength;                       
-                // 散射 总亮度   
+                float dstTravelled = dstToCloud + buleNoise * _RayOffsetStrength;                       
                 float3 lightEnergy = 0;
-                // 透过率
                 float transmittance = 1.0; 
+
+                // 如果步进到被物体遮挡,或穿出云覆盖范围时,跳出循环
+                if (dstToObj <= dstTravelled || endPos <= dstTravelled)
+                {
+                    return float4(1,0,0, 1.0);
+                }
+                
                 [unroll(32)]
                 for(int i = 0; i < _StepCount; i++){
-                    if(dstTravelled < dstLimit){
-                        currentPoint += stepVec;
-                        float density = sampleDensity(currentPoint);
-                        if (density > 0.01){
-                            float lightTransmittance = lightMarching(currentPoint);		// 步进默认为8次
-                            lightEnergy += density * stepSize * transmittance * lightTransmittance * phaseVal;
-                            transmittance *= Beer(density * stepSize,_Absorption);
-                            if (transmittance < 0.01)
-                                break;
-                        }
-                        dstTravelled += stepSize;
+                    
+                    currentPoint += stepVec;
+                    
+                    // float density = sampleDensity(currentPoint);
+                    float density = SampleCloudDensity(sphereCenter, earthRadius, currentPoint);
+                    if (density > 0.01){
+                        // lightEnergy.b += 0.01;
+                        // lightEnergy.g += 0.01;
+                        // float lightTransmittance = lightMarching(currentPoint);		// 步进默认为8次
+                        lightEnergy += density * stepSize * transmittance;// * lightTransmittance * phaseVal;
+                        transmittance *= Beer(density * stepSize,_Absorption);
+                        if (transmittance < 0.01)
+                            break;
                     }
-                    else{
+                    dstTravelled += stepSize;
+                    
+                    //如果步进到被物体遮挡,或穿出云覆盖范围时,跳出循环
+                    if (dstToObj <= dstTravelled || endPos <= dstTravelled)
+                    {
                         break;
                     }
                 }

@@ -11,41 +11,26 @@ public class VolumetricCloud: VolumeComponent, IPostProcessComponent
     public ColorParameter colorCentral = new ColorParameter(new Color(1, 1, 1, 1));
     public ColorParameter colorDark = new ColorParameter(new Color(1, 1, 1, 1));
     public FloatParameter colorCentralOffset = new ClampedFloatParameter(0.5f,0.0f,1.0f);
-    [Header("Box")]
-    [Tooltip("盒子中心点(默认原点0)")]
-    public Vector3Parameter center = new Vector3Parameter(new Vector3(0.0f, 0.0f,0.0f));
-    [Tooltip("盒子长宽高")]
-    public Vector3Parameter dimensions = new Vector3Parameter(new Vector3(20.0f, 20.0f,10.0f));
+
+    [Header("Sphere")]
+    public Vector4Parameter cloudHeightRange = new Vector4Parameter(new Vector4(1500f, 4000f, 0f, 8000f));
     
 
-    [Tooltip("蓝噪声")]
+    [Header("NoiseTexture")]
     public Texture2DParameter blueNoise = new Texture2DParameter(null);
-    
-    [Tooltip("3D形状噪声")]
     public Texture3DParameter shapeNoise = new Texture3DParameter(null);
-    [Tooltip("3D细节噪声")]
     public Texture3DParameter detailNoise = new Texture3DParameter(null);
     public Texture2DParameter weatherMap = new Texture2DParameter(null);
-
     public Texture2DParameter maskNoise = new Texture2DParameter(null);
-    // [Tooltip("密度-高度曲线A")]
-    // public Texture2DParameter heightCurveA = new Texture2DParameter(null);
-    // [Tooltip("密度-高度曲线B")]
-    // public Texture2DParameter heightCurveB = new Texture2DParameter(null);
 
     [Header("RayMarching")]
     public FloatParameter rayOffsetStrength = new ClampedFloatParameter(10.0f, 0.01f, 30f);
-    [Tooltip("RayMarching步进次数")]
-    public FloatParameter step = new ClampedFloatParameter(1.2f, 0.01f, 5.0f);
-    public FloatParameter rayStep = new ClampedFloatParameter(1.2f,0.01f,5.0f);
     public IntParameter stepCount = new ClampedIntParameter(32, 1, 128);
     public FloatParameter heightCurveWeight = new ClampedFloatParameter(0.5f, 0.01f, 1.0f);
 
     [Header("Scattering")]
     [Tooltip("相位函数x:前 y:后 z:调亮系数 w:比例因子")]
     public Vector4Parameter phaseParams = new Vector4Parameter(new Vector4(0.72f, -1.0f, 0.5f, 1.58f));
-    [Tooltip("相位函数混合")]
-    public FloatParameter henyeyBlend = new ClampedFloatParameter(0.3f, 0.01f, 1.0f);
 
     [Tooltip("暗部阈值")]
     public FloatParameter darknessThreshold = new ClampedFloatParameter(0.3f, 0.01f, 1.0f);
@@ -90,28 +75,19 @@ public class VolumetricCloud: VolumeComponent, IPostProcessComponent
             material.SetTexture("_DetailNoise", detailNoise.value);
         }
         
-        // if (heightCurveA != null){
-        //     material.SetTexture("_HeightCurveA", heightCurveA.value);
-        // }
-        // if (heightCurveB != null){
-        //     material.SetTexture("_HeightCurveB", heightCurveB.value);
-        // }
-
+        // Sphere
         
-        // 体积云
-        material.SetVector("_Center", center.value);
-        material.SetVector("_Dimensions", dimensions.value);
+        material.SetVector("_CloudHeightRange", cloudHeightRange.value);
+        
+
         material.SetFloat("_RayOffsetStrength", rayOffsetStrength.value);
         material.SetInt("_StepCount", stepCount.value);
-        material.SetFloat("_step", step.value);
-        material.SetFloat("_rayStep", rayStep.value);
         material.SetFloat("_HeightCurveWeight", heightCurveWeight.value);
 
 
 
         // 散射函数
         material.SetVector("_PhaseParams",phaseParams.value);
-        material.SetFloat("_HenyeyBlend", henyeyBlend.value);
         material.SetFloat("_DarknessThreshold", darknessThreshold.value);
         material.SetFloat("_Absorption", absorption.value);
         material.SetFloat("_LightAbsorption", lightAbsorption.value);

@@ -94,18 +94,15 @@ MonoBehaviour:
   colorCentralOffset:
     m_OverrideState: 1
     m_Value: 0.488
-  center:
+  cloudHeightRange:
     m_OverrideState: 1
-    m_Value: {x: -8.93, y: 86.1, z: 15.2}
-  dimensions:
-    m_OverrideState: 1
-    m_Value: {x: 600, y: 400, z: 40}
+    m_Value: {x: 150000, y: 190000, z: 0, w: 1000}
   blueNoise:
     m_OverrideState: 1
     m_Value: {fileID: 2800000, guid: 12fb9322415d34d43ab7cf3677856f88, type: 3}
   shapeNoise:
     m_OverrideState: 1
-    m_Value: {fileID: 11700000, guid: 3d63481784ffeca45b08b60ecf55185c, type: 2}
+    m_Value: {fileID: 11700000, guid: b488d6499b912854d874bf66ccbeb83a, type: 2}
   detailNoise:
     m_OverrideState: 1
     m_Value: {fileID: 11700000, guid: 680d41eeba33be64b8001b377b978579, type: 2}
@@ -117,34 +114,25 @@ MonoBehaviour:
     m_Value: {fileID: 2800000, guid: f5a0d589b5349ed4fba0e1fc16b3bf67, type: 3}
   rayOffsetStrength:
     m_OverrideState: 1
-    m_Value: 8.3
-  step:
-    m_OverrideState: 0
-    m_Value: 1.9
-  rayStep:
-    m_OverrideState: 0
-    m_Value: 3.35
+    m_Value: 11.1
   stepCount:
     m_OverrideState: 1
-    m_Value: 72
+    m_Value: 87
   heightCurveWeight:
     m_OverrideState: 1
-    m_Value: 0.353
+    m_Value: 0.201
   phaseParams:
     m_OverrideState: 1
-    m_Value: {x: -0.57, y: 0.91, z: 0.75, w: 1.59}
-  henyeyBlend:
-    m_OverrideState: 1
-    m_Value: 0.375
+    m_Value: {x: 35, y: 0.91, z: 0.75, w: 1.59}
   darknessThreshold:
     m_OverrideState: 1
-    m_Value: 0.435
+    m_Value: 0.461
   absorption:
     m_OverrideState: 1
-    m_Value: 1.21
+    m_Value: 1.18
   lightAbsorption:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 1.8
   xy_Speed_zw_Warp:
     m_OverrideState: 1
     m_Value: {x: 0.26, y: 0.22, z: 0.37, w: 8.41}
@@ -153,22 +141,22 @@ MonoBehaviour:
     m_Value: 0.01
   detailTiling:
     m_OverrideState: 1
-    m_Value: 0.01
+    m_Value: 4.5
   densityMultiplier:
     m_OverrideState: 1
-    m_Value: 2.44
+    m_Value: 0.69
   shapeNoiseWeights:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: {x: 2.27, y: 0.2, z: 0.17, w: 0.43}
   densityOffset:
     m_OverrideState: 1
-    m_Value: 1.67
+    m_Value: 1.66
   detailWeights:
     m_OverrideState: 1
-    m_Value: 0.4
+    m_Value: 0.01
   detailNoiseWeight:
     m_OverrideState: 1
-    m_Value: 0.67
+    m_Value: 0.69
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
