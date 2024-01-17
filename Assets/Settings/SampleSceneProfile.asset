@@ -87,76 +87,94 @@ MonoBehaviour:
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   colorCentral:
     m_OverrideState: 1
-    m_Value: {r: 0.9245283, g: 0.8578116, b: 0.5704165, a: 1}
+    m_Value: {r: 0.754717, g: 0.6454711, b: 0.1737273, a: 1}
   colorDark:
     m_OverrideState: 1
-    m_Value: {r: 0.745283, g: 0.745283, b: 0.745283, a: 1}
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
   colorCentralOffset:
     m_OverrideState: 1
-    m_Value: 0.488
+    m_Value: 0.408
   cloudHeightRange:
     m_OverrideState: 1
-    m_Value: {x: 150000, y: 190000, z: 0, w: 1000}
+    m_Value: {x: 2002.7, y: 7000, z: 0, w: 8000}
+  stratusRange:
+    m_OverrideState: 1
+    m_Value: {x: 0.27, y: 0.65}
+  stratusFeather:
+    m_OverrideState: 1
+    m_Value: 0.523
+  cumulusRange:
+    m_OverrideState: 1
+    m_Value: {x: 0.04, y: 0.8}
+  cumulusFeather:
+    m_OverrideState: 1
+    m_Value: 0.301
   blueNoise:
     m_OverrideState: 1
     m_Value: {fileID: 2800000, guid: 12fb9322415d34d43ab7cf3677856f88, type: 3}
   shapeNoise:
     m_OverrideState: 1
-    m_Value: {fileID: 11700000, guid: b488d6499b912854d874bf66ccbeb83a, type: 2}
+    m_Value: {fileID: 11700000, guid: c009f04e59677e94e9caafd9d957b921, type: 2}
   detailNoise:
     m_OverrideState: 1
     m_Value: {fileID: 11700000, guid: 680d41eeba33be64b8001b377b978579, type: 2}
   weatherMap:
     m_OverrideState: 1
     m_Value: {fileID: 2800000, guid: aee0893ba6c26db48bf382c85a0b8d6c, type: 3}
-  maskNoise:
-    m_OverrideState: 1
-    m_Value: {fileID: 2800000, guid: f5a0d589b5349ed4fba0e1fc16b3bf67, type: 3}
   rayOffsetStrength:
     m_OverrideState: 1
-    m_Value: 11.1
+    m_Value: 14.1
   stepCount:
     m_OverrideState: 1
-    m_Value: 87
+    m_Value: 85
   heightCurveWeight:
-    m_OverrideState: 1
-    m_Value: 0.201
+    m_OverrideState: 0
+    m_Value: 0.261
   phaseParams:
     m_OverrideState: 1
-    m_Value: {x: 35, y: 0.91, z: 0.75, w: 1.59}
+    m_Value: {x: 0.12, y: 0.65, z: 0.06, w: 0.57}
   darknessThreshold:
     m_OverrideState: 1
-    m_Value: 0.461
+    m_Value: 0.4
   absorption:
     m_OverrideState: 1
-    m_Value: 1.18
+    m_Value: 1
   lightAbsorption:
     m_OverrideState: 1
-    m_Value: 1.8
-  xy_Speed_zw_Warp:
+    m_Value: 1
+  weatherTiling:
     m_OverrideState: 1
-    m_Value: {x: 0.26, y: 0.22, z: 0.37, w: 8.41}
+    m_Value: 40.84
+  weatherOffset:
+    m_OverrideState: 1
+    m_Value: 7.1
   shapeTiling:
     m_OverrideState: 1
-    m_Value: 0.01
+    m_Value: 1
   detailTiling:
     m_OverrideState: 1
-    m_Value: 4.5
+    m_Value: 0.3
   densityMultiplier:
     m_OverrideState: 1
-    m_Value: 0.69
-  shapeNoiseWeights:
-    m_OverrideState: 0
-    m_Value: {x: 2.27, y: 0.2, z: 0.17, w: 0.43}
-  densityOffset:
+    m_Value: 1
+  shapeEffect:
     m_OverrideState: 1
-    m_Value: 1.66
-  detailWeights:
+    m_Value: 0.65
+  windDirection:
     m_OverrideState: 1
-    m_Value: 0.01
+    m_Value: {x: 1, y: 0, z: 0}
+  windSpeed:
+    m_OverrideState: 1
+    m_Value: 2.04
   detailNoiseWeight:
     m_OverrideState: 1
-    m_Value: 0.69
+    m_Value: 4.75
+  cloudDensityAdjust:
+    m_OverrideState: 1
+    m_Value: 0.441
+  densityThreshold:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

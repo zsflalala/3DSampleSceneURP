@@ -14,14 +14,16 @@ public class VolumetricCloud: VolumeComponent, IPostProcessComponent
 
     [Header("Sphere")]
     public Vector4Parameter cloudHeightRange = new Vector4Parameter(new Vector4(1500f, 4000f, 0f, 8000f));
-    
+    public Vector2Parameter stratusRange = new Vector2Parameter(new Vector2(0.1f, 0.4f));
+    public FloatParameter stratusFeather = new ClampedFloatParameter(0.2f,0.0f,1.0f);
+    public Vector2Parameter cumulusRange = new Vector2Parameter(new Vector2(0.15f, 0.8f));
+    public FloatParameter cumulusFeather = new ClampedFloatParameter(0.2f,0.0f,1.0f);
 
     [Header("NoiseTexture")]
     public Texture2DParameter blueNoise = new Texture2DParameter(null);
     public Texture3DParameter shapeNoise = new Texture3DParameter(null);
     public Texture3DParameter detailNoise = new Texture3DParameter(null);
     public Texture2DParameter weatherMap = new Texture2DParameter(null);
-    public Texture2DParameter maskNoise = new Texture2DParameter(null);
 
     [Header("RayMarching")]
     public FloatParameter rayOffsetStrength = new ClampedFloatParameter(10.0f, 0.01f, 30f);
@@ -40,14 +42,17 @@ public class VolumetricCloud: VolumeComponent, IPostProcessComponent
     [Tooltip("反射消光系数")]
     public FloatParameter lightAbsorption = new ClampedFloatParameter(1.0f, 0.01f, 4.0f);
 
-    public Vector4Parameter xy_Speed_zw_Warp = new Vector4Parameter(new Vector4(0.05f, 1f, 1f, 10f));
+    public FloatParameter weatherTiling = new FloatParameter(0.01f);
+    public FloatParameter weatherOffset = new FloatParameter(0.01f);
     public FloatParameter shapeTiling = new FloatParameter(0.01f);
     public FloatParameter detailTiling = new FloatParameter(0.1f);
     public FloatParameter densityMultiplier = new FloatParameter(2.31f);
-    public Vector4Parameter shapeNoiseWeights = new Vector4Parameter(new Vector4(-0.17f, 27.17f, -3.65f, -0.08f));
-    public FloatParameter densityOffset = new FloatParameter(4.02f);
-    public FloatParameter detailWeights = new FloatParameter(-3.76f);
+    public FloatParameter shapeEffect = new ClampedFloatParameter(0.17f, 0.0f, 1.0f);
+    public Vector3Parameter windDirection = new Vector3Parameter(new Vector3(1.0f, 0.0f, 0.0f));
+    public FloatParameter windSpeed = new ClampedFloatParameter(1.0f, 0.0f, 5.0f);
     public FloatParameter detailNoiseWeight = new FloatParameter(0.12f);
+    public FloatParameter cloudDensityAdjust = new ClampedFloatParameter(0.5f, 0.0f, 1.0f);
+    public FloatParameter densityThreshold = new ClampedFloatParameter(0.5f, 0.0f, 1.0f);
     
 
     public bool IsActive() => true;
@@ -62,9 +67,6 @@ public class VolumetricCloud: VolumeComponent, IPostProcessComponent
         if (blueNoise != null){
             material.SetTexture("_BlueNoise", blueNoise.value);
         }
-        if (maskNoise != null){
-            material.SetTexture("_MaskNoise", maskNoise.value);
-        }
         if (weatherMap != null){
             material.SetTexture("_WeatherMap", weatherMap.value);
         }
@@ -78,6 +80,10 @@ public class VolumetricCloud: VolumeComponent, IPostProcessComponent
         // Sphere
         
         material.SetVector("_CloudHeightRange", cloudHeightRange.value);
+        material.SetVector("_StratusRange", stratusRange.value);
+        material.SetFloat("_StratusFeather", stratusFeather.value);
+        material.SetVector("_CumulusRange", cumulusRange.value);
+        material.SetFloat("_CumulusFeather", cumulusFeather.value);
         
 
         material.SetFloat("_RayOffsetStrength", rayOffsetStrength.value);
@@ -92,13 +98,16 @@ public class VolumetricCloud: VolumeComponent, IPostProcessComponent
         material.SetFloat("_Absorption", absorption.value);
         material.SetFloat("_LightAbsorption", lightAbsorption.value);
 
-        material.SetVector("_xy_Speed_zw_Warp",xy_Speed_zw_Warp.value);
+        material.SetFloat("_WeatherTiling", weatherTiling.value);
+        material.SetFloat("_WeatherOffset", weatherOffset.value);
         material.SetFloat("_ShapeTiling", shapeTiling.value);
         material.SetFloat("_DetailTiling", detailTiling.value);
         material.SetFloat("_DensityMultiplier", densityMultiplier.value);
-        material.SetVector("_ShapeNoiseWeights",shapeNoiseWeights.value);
-        material.SetFloat("_DensityOffset", densityOffset.value);
-        material.SetFloat("_DetailWeights", detailWeights.value);
+        material.SetFloat("_ShapeEffect",shapeEffect.value);
+        material.SetVector("_WindDirection",windDirection.value);
+        material.SetFloat("_WindSpeed", windSpeed.value);
         material.SetFloat("_DetailNoiseWeight", detailNoiseWeight.value);
+        material.SetFloat("_CloudDensityAdjust", cloudDensityAdjust.value);
+        material.SetFloat("_DensityThreshold", densityThreshold.value);
     }
 }

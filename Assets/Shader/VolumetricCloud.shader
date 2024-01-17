@@ -1,10 +1,6 @@
 Shader "ShengFu/VolumetricCloud"{
     Properties{
         _MainTex("Main Texture", 2D) = "white" {}
-        [Range(RealTime)]_StratusRange ("层云范围", vector) = (0.1, 0.4, 0, 1)
-        [Switch(RealTime)]_StratusFeather ("层云边缘羽化", Range(0, 1)) = 0.2
-        [Range(RealTime)]_CumulusRange ("积云范围", vector) = (0.15, 0.8, 0, 1)
-        [Switch(RealTime)]_CumulusFeather ("积云边缘羽化", Range(0, 1)) = 0.2
     }
     SubShader{
         Tags{
@@ -34,9 +30,9 @@ Shader "ShengFu/VolumetricCloud"{
 
             // Sphere
             float4 _CloudHeightRange;
-            float4 _StratusRange;
+            float2 _StratusRange;
             float _StratusFeather;
-            float4 _CumulusRange;
+            float2 _CumulusRange;
             float _CumulusFeather;
 
             // RayMarching
@@ -62,24 +58,26 @@ Shader "ShengFu/VolumetricCloud"{
             Texture2D _MainTex;
             SamplerState sampler_MainTex;
             TEXTURE2D(_CameraColorTexture);
-	        SAMPLER(sampler_CameraColorTexture);
+	        SamplerState sampler_CameraColorTexture;
             
-            // sampler2D _HeightCurveA;
-            // sampler2D _HeightCurveB;
             sampler2D _BlueNoise;
-            sampler2D _MaskNoise;
-            sampler2D _WeatherMap;
+            TEXTURE2D(_WeatherMap);
+            SAMPLER(sampler_WeatherMap);
             sampler3D _ShapeNoise;
             sampler3D _DetailNoise;
 
-            float4 _xy_Speed_zw_Warp;
+            // sphere
+            float _WeatherTiling;
+            float _WeatherOffset;
             float _ShapeTiling;
 	        float _DetailTiling;
             float _DensityMultiplier;
-            float4 _ShapeNoiseWeights;
-            float _DensityOffset;
-            float _DetailWeights;
+            float _ShapeEffect;
+            float3 _WindDirection;
+            float _WindSpeed;
             float _DetailNoiseWeight;
+            float _CloudDensityAdjust;
+            float _DensityThreshold;
 
             
 
@@ -109,27 +107,6 @@ Shader "ShengFu/VolumetricCloud"{
                 float x = uv.x * width;
                 float y = uv.y * height;
                 return float2 (x/scale, y/scale);
-            }
-
-            float GetLightAttenuation(float3 position)
-            {
-                float4 shadowPos = TransformWorldToShadowCoord(position); //把采样点的世界坐标转到阴影空间
-                float intensity = MainLightRealtimeShadow(shadowPos); //进行shadow map采样
-                return intensity; //返回阴影值
-            }
-
-            float2 rayBoxDst(float3 boundsMin, float3 boundsMax, float3 rayOrigin, float3 rayDir){
-                float3 t0 = (boundsMin - rayOrigin) / rayDir;
-                float3 t1 = (boundsMax - rayOrigin) / rayDir;
-                float3 tmin = min(t0, t1);
-                float3 tmax = max(t0, t1);
-
-                float dstA = max(max(tmin.x, tmin.y), tmin.z);
-                float dstB = min(tmax.x, min(tmax.y, tmax.z));
-
-                float dstToCloud = max(0, dstA);
-                float dstInCloud = max(0, dstB - dstToCloud);
-                return float2(dstToCloud, dstInCloud);
             }
 
             //射线与球体相交, x 到球体最近的距离， y 穿过球体的距离
@@ -235,102 +212,6 @@ Shader "ShengFu/VolumetricCloud"{
                 return lerp(lerp(value1, value2, min(x, offset) / offset), value3, max(0, x - offset) / (1.0 - offset));
             }
 
-            // 重映射
-            float remap(float original_value, float original_min, float original_max, float new_min, float new_max)
-            {
-                return new_min + (((original_value - original_min) / (original_max - original_min)) * (new_max - new_min));
-            }
-    
-            float sampleDensity(float3 position){
-                float3 boundsCentre = (_BoundMax + _BoundMin) * 0.5;
-		        float3 size = _BoundMax - _BoundMin;
-                float speedShape = _Time.y * _xy_Speed_zw_Warp.x;
-                float speedDetail = _Time.y * _xy_Speed_zw_Warp.y;
-
-                float3 uvwShape = position * _ShapeTiling + float3(speedShape, speedShape * 0.2, 0);
-                float3 uvwDetail = position * _DetailTiling + float3(speedDetail, speedDetail * 0.2, 0);
-
-                float2 uv = (size.xz * 0.5f + (position.xz - boundsCentre.xz)) / max(size.x, size.z);
-
-                float4 maskNoise = tex2Dlod(_MaskNoise, float4(uv + float2(speedShape * 0.5, 0), 0, 0));
-                float4 weatherMap = tex2Dlod(_WeatherMap, float4(uv + float2(speedShape * 0.4, 0), 0, 0));
-
-                float4 shapeNoise = tex3Dlod(_ShapeNoise, float4(uvwShape + (maskNoise.r * _xy_Speed_zw_Warp.z * 0.1), 0));
-                float4 detailNoise = tex3Dlod(_DetailNoise, float4(uvwDetail + (shapeNoise.r * _xy_Speed_zw_Warp.w * 0.1), 0));
-
-                //边缘衰减
-                const float containerEdgeFadeDst = 10;
-                float dstFromEdgeX = min(containerEdgeFadeDst, min(position.x - _BoundMin.x, _BoundMax.x - position.x));
-                float dstFromEdgeZ = min(containerEdgeFadeDst, min(position.z - _BoundMin.z, _BoundMax.z - position.z));
-                float edgeWeight = min(dstFromEdgeZ, dstFromEdgeX) / containerEdgeFadeDst;
-
-                float gMin = remap(weatherMap.x, 0, 1, 0.1, 0.6);
-                float gMax = remap(weatherMap.x, 0, 1, gMin, 0.9);
-                float heightPercent = (position.y - _BoundMin.y) / size.y;
-                float heightGradient = saturate(remap(heightPercent, 0.0, gMin, 0, 1)) * saturate(remap(heightPercent, 1, gMax, 0, 1));
-                float heightGradient2 = saturate(remap(heightPercent, 0.0, weatherMap.r, 1, 0)) * saturate(remap(heightPercent, 0.0, gMin, 0, 1));
-                heightGradient = saturate(lerp(heightGradient, heightGradient2, _HeightCurveWeight));
-
-                heightGradient *= edgeWeight;
-
-                float4 normalizedShapeWeights = _ShapeNoiseWeights / dot(_ShapeNoiseWeights, 1);
-                float shapeFBM = dot(shapeNoise, normalizedShapeWeights) * heightGradient;
-                float baseShapeDensity = shapeFBM + _DensityOffset * 0.01;
-
-
-                if (baseShapeDensity > 0)
-                {
-                    float detailFBM = pow(detailNoise.r, _DetailWeights);
-                    float oneMinusShape = 1 - baseShapeDensity;
-                    float detailErodeWeight = oneMinusShape * oneMinusShape * oneMinusShape;
-                    float cloudDensity = baseShapeDensity - detailFBM * detailErodeWeight * _DetailNoiseWeight;
-
-                    return saturate(cloudDensity * _DensityMultiplier);
-                }
-                return 0;
-            }
-
-            float lightMarching(float3 position, int stepCount = 8){
-                /* sample density from given point to light 
-                within target step count */
-
-                // URP的主光源位置的定义名字换了一下
-                float3 dirToLight = _MainLightPosition.xyz;
-
-                /* 这里的给传入的方向反向了一下是因为，rayBoxDst的计算是要从
-                目标点到体积，而采样时，则是反过来，从position出发到主光源*/
-                float dstInCloud = rayBoxDst(_BoundMin, _BoundMax, position, 1/dirToLight).y;
-
-                // 采样
-                float stepSize = dstInCloud / stepCount;
-                float totalDensity = 0;
-                float3 stepVec = dirToLight * stepSize;
-                for(int i = 0; i < stepCount; i++){
-                    position += stepVec;
-                    totalDensity += max(0, sampleDensity(position) * stepSize);
-                }
-                float transmittance = BeerPowder(totalDensity,_LightAbsorption);
-                float3 cloudColor = Interpolation3(_ColorDark.rgb, _ColorCentral.rgb, _ColorBright.rgb, saturate(transmittance), _ColorCentralOffset);
-                float3 lightTransmittance = _DarknessThreshold + (1.0 - _DarknessThreshold) * cloudColor ;
-                return lightTransmittance;
-            }
-
-            float lightMarching(float sphereCenter,float sphereRadius,float3 position, int stepCount = 8){
-                // URP的主光源位置的定义名字换了一下
-                float3 dirToLight = _MainLightPosition.xyz;
-                float dstInsideCloud = RaySphereDst(sphereCenter, sphereRadius, position, 1 / dirToLight).y;
-
-                // 采样
-                float stepSize = dstInsideCloud / stepCount;
-                float totalDensity = 0;
-                float3 stepVec = dirToLight * stepSize;
-                for(int i = 0; i < stepCount; i ++){
-                    position += stepVec;
-                    totalDensity += max(0, sampleDensity(position) * stepSize);
-                }
-                return totalDensity;
-            }
-
             //重映射
             float Remap(float original_value, float original_min, float original_max, float new_min, float new_max)
             {
@@ -354,42 +235,66 @@ Shader "ShengFu/VolumetricCloud"{
             //采样云的密度  isCheaply=true时不采样细节纹理
             float SampleCloudDensity(float3 sphereCenter,float earthRadius,float3 position)
             {   
+
                 float3 stratusInfo = float3(_StratusRange.xy, _StratusFeather);
                 float3 cumulusInfo = float3(_CumulusRange.xy, _CumulusFeather);
                 float heightFraction = GetHeightFraction(sphereCenter, earthRadius, position, _CloudHeightRange.x, _CloudHeightRange.y);
-                
+                //添加风的影响
+                float3 windDirecton = normalize(_WindDirection);
+                float  windSpeed = _WindSpeed;
+                float3 wind = windDirecton * windSpeed * _Time.y;
+                position = position + wind * 100;
                 //采样天气纹理，默认1000km平铺， r 密度, g 吸收率, b 云类型(0~1 => 层云~积云)
                 // float2 weatherTexUV = GetWeatherTexUV(dsi.sphereCenter, dsi.position, dsi.weatherTexTiling, dsi.weatherTexRepair);
-                // float2 weatherTexUV = position.xz ;
-                // float4 weatherData = tex2Dlod(_WeatherMap,float4(weatherTexUV,0,0));
-                // weatherData.r = Interpolation3(0, weatherData.r, 1, 0.5);
-                // weatherData.b = Interpolation3(0, weatherData.b, 1, 0.5);
-                // if (weatherData.r <= 0)
-                // {
-                //     return 0;
-                // }
+                float2 weatherTexUV = position.xz * _WeatherTiling;
+                // float4 weatherData = tex2Dlod(_WeatherMap,float4(weatherTexUV * 0.1 + _WeatherOffset + wind.xz * 0.01,0,0));
+                float4 weatherData = SAMPLE_TEXTURE2D_LOD(_WeatherMap, sampler_WeatherMap, weatherTexUV * 0.000001 + _WeatherOffset + wind.xz * 0.01, 0);
+                weatherData.r = Interpolation3(0, weatherData.r, 1, _CloudDensityAdjust);
+                weatherData.b = Interpolation3(0, weatherData.b, 1, _CloudDensityAdjust);
+                if (weatherData.r <= 0)
+                {
+                    return 0;
+                }
                 
-                // //计算云类型密度
+                //计算云类型密度
                 float stratusDensity = GetCloudTypeDensity(heightFraction, stratusInfo.x, stratusInfo.y, stratusInfo.z);
-                // float cumulusDensity = GetCloudTypeDensity(heightFraction, cumulusInfo.x, cumulusInfo.y, cumulusInfo.z);
-                // float cloudTypeDensity = lerp(stratusDensity, cumulusDensity, weatherData.b);
-                // if (cloudTypeDensity <= 0)
-                // {
-                //     return 0;
-                // }
+                float cumulusDensity = GetCloudTypeDensity(heightFraction, cumulusInfo.x, cumulusInfo.y, cumulusInfo.z);
+                float cloudTypeDensity = lerp(stratusDensity, cumulusDensity, weatherData.b);
+                if (cloudTypeDensity <= 0)
+                {
+                    return 0;
+                }
                 
                 //采样基础纹理
-                float4 baseTex = tex3D(_ShapeNoise,position * _ShapeTiling * 0.01 + _DetailTiling * 0.01);
+                float4 baseTex = tex3D(_ShapeNoise,position * _ShapeTiling * 0.0001);
                 //构建基础纹理的FBM
                 float baseTexFBM = dot(baseTex.gba, float3(0.5, 0.25, 0.125));
                 //对基础形状添加细节，通过Remap可以不影响基础形状下添加细节
-                float baseShape = Remap(baseTex.r, saturate((1.0 - baseTexFBM) * _DetailNoiseWeight), 1.0, 0, 1.0);
+                float baseShape = Remap(baseTex.r, saturate((1.0 - baseTexFBM) * _ShapeEffect), 1.0, 0, 1.0);
                 
-                float cloudDensity = baseTex.r * stratusDensity;
+                float cloudDensity = baseShape * weatherData.r * cloudTypeDensity;
                 
                 float density = cloudDensity * _DensityMultiplier * 0.01;
+                density = max(0, density - _DensityThreshold);
                 
-                return max(0,baseTex.r - _DetailNoiseWeight);
+                return density;
+            }
+
+            float lightMarching(float sphereCenter,float sphereRadius,float3 position,float3 lightDir, int stepCount = 8){
+                float2 dstCloud_light = RayCloudLayerDst(sphereCenter, sphereRadius, _CloudHeightRange.x, _CloudHeightRange.y, position, lightDir, false);
+                float dstInsideCloud = dstCloud_light.y;
+
+                float stepSize = dstInsideCloud / stepCount;
+                float totalDensity = 0;
+                float3 stepVec = lightDir * stepSize;
+                for(int i = 0; i < stepCount; i ++){
+                    position += stepVec;
+                    totalDensity += max(0, SampleCloudDensity(sphereCenter, sphereRadius, position) * stepSize);
+                }
+                float transmittance = BeerPowder(totalDensity,_LightAbsorption);
+                float3 cloudColor = Interpolation3(_ColorDark.rgb, _ColorCentral.rgb, _ColorBright.rgb, saturate(transmittance), _ColorCentralOffset);
+                float3 lightTransmittance = _DarknessThreshold + (1.0 - _DarknessThreshold) * cloudColor ;
+                return lightTransmittance;
             }
 
             struct vertexInput{
@@ -407,84 +312,66 @@ Shader "ShengFu/VolumetricCloud"{
                 vertexOutput o;
                 o.pos = TransformObjectToHClip(v.vertex);
                 o.uv = v.uv;
-                float3 ndcPos = float3(v.uv.xy * 2.0 - 1.0, 1); //直接把uv映射到ndc坐标
-                float far = _ProjectionParams.z; //获取投影信息的z值，代表远平面距离
-                float3 clipVec = float3(ndcPos.x, ndcPos.y, ndcPos.z * -1) * far; //裁切空间下的视锥顶点坐标
-                o.viewDir = mul(unity_CameraInvProjection, clipVec.xyzz).xyz; //观察空间下的视锥向量
+                float3 viewDir = mul(unity_CameraInvProjection, float4(v.uv * 2.0 - 1.0, 0, -1)).xyz;
+                o.viewDir = mul(unity_CameraToWorld, float4(viewDir, 0)).xyz;
                 return o;
             }
 
-            half4 Pixel(vertexOutput IN): SV_TARGET{
-                // 重建世界坐标
-                // float3 worldPosition = GetWorldPosition(IN.pos);
-                // float3 worldPosition = GetWorldPosition(IN.uv,IN.viewDir);
-                float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, IN.uv);
-                float3 worldPosition = ComputeWorldSpacePosition(IN.uv, depth, UNITY_MATRIX_I_VP);
-                float3 rayPosition = _WorldSpaceCameraPos.xyz;
-                float3 worldViewDir = worldPosition - rayPosition;
-                float3 rayDir = normalize(worldViewDir);
-
+            half4 Pixel(vertexOutput i): SV_TARGET{
+                half4 backColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, i.uv);
+                float dstToObj = LinearEyeDepth(depth, _ZBufferParams);
+                
+                Light mainLight = GetMainLight();
+                float3 viewDir = normalize(i.viewDir);
+                float3 lightDir = normalize(mainLight.direction);
                 float3 cameraPos = GetCameraPositionWS();
-                float  earthRadius = 6300000;   //地球半径在6,357km到6,378km
+
+                float earthRadius = 6300000;
                 float3 sphereCenter = float3(cameraPos.x, -earthRadius, cameraPos.z); //地球中心坐标, 使水平行走永远不会逃出地球, 高度0为地表
-                float2 dstCloud = RayCloudLayerDst(sphereCenter, earthRadius, _CloudHeightRange.x, _CloudHeightRange.y, cameraPos, IN.viewDir);
+                float2 dstCloud = RayCloudLayerDst(sphereCenter, earthRadius, _CloudHeightRange.x, _CloudHeightRange.y, cameraPos, viewDir);
                 float dstToCloud = dstCloud.x;
                 float dstInCloud = dstCloud.y;
+                if (dstInCloud <= 0)
+                {
+                    return backColor;
+                }
+                float endPos = dstToCloud + dstInCloud;
 
-                float dstToObj = LinearEyeDepth(depth, _ZBufferParams);
-                float endPos = dstToCloud + dstInCloud;  //穿出云覆盖范围的位置(结束位置)
+                float cosAngle = dot(i.viewDir, lightDir);
+                float3 phaseVal = phase(cosAngle);
                 
-                // float dstToOpaque = length(worldViewDir);
-                float dstLimit = min(dstToObj - dstToCloud, dstInCloud);
-
-                Light mainLight = GetMainLight();
-                float cosAngle = dot(IN.viewDir, normalize(mainLight.direction));
-                float3 phaseVal = phase(cosAngle); //当前视角方向和灯光方向而得出的米氏散射近似结果(云的白色)
-
-                float3 entryPoint = cameraPos + rayDir * dstToCloud;
+                const float stepCount = 48;
+                float3 entryPoint = cameraPos + viewDir * dstToCloud;
                 float3 currentPoint = entryPoint;
                 float stepSize = dstInCloud / _StepCount; 
-                float3 stepVec = stepSize * rayDir;
-                float buleNoise = tex2Dlod(_BlueNoise,float4(squareUV(IN.uv*3),0,0)).r;
+                float3 stepVec = stepSize * viewDir;
+
+                float buleNoise = tex2Dlod(_BlueNoise,float4(squareUV(i.uv*3),0,0)).r;
                 float dstTravelled = dstToCloud + buleNoise * _RayOffsetStrength;                       
                 float3 lightEnergy = 0;
                 float transmittance = 1.0; 
-
-                // 如果步进到被物体遮挡,或穿出云覆盖范围时,跳出循环
-                if (dstToObj <= dstTravelled || endPos <= dstTravelled)
-                {
-                    return float4(1,0,0, 1.0);
-                }
                 
-                [unroll(32)]
+                [unroll(12)]
                 for(int i = 0; i < _StepCount; i++){
-                    
                     currentPoint += stepVec;
-                    
-                    // float density = sampleDensity(currentPoint);
                     float density = SampleCloudDensity(sphereCenter, earthRadius, currentPoint);
-                    if (density > 0.01){
-                        // lightEnergy.b += 0.01;
-                        // lightEnergy.g += 0.01;
-                        // float lightTransmittance = lightMarching(currentPoint);		// 步进默认为8次
-                        lightEnergy += density * stepSize * transmittance;// * lightTransmittance * phaseVal;
+                    if (density * stepSize > 0.01){
+                        float lightTransmittance = lightMarching(sphereCenter, earthRadius, currentPoint, lightDir);
+                        lightEnergy += density * stepSize * transmittance * lightTransmittance * phaseVal;
                         transmittance *= Beer(density * stepSize,_Absorption);
-                        if (transmittance < 0.01)
+                        if (transmittance < 0.01){
                             break;
+                        }
                     }
                     dstTravelled += stepSize;
-                    
-                    //如果步进到被物体遮挡,或穿出云覆盖范围时,跳出循环
-                    if (dstToObj <= dstTravelled || endPos <= dstTravelled)
+                    if (endPos <= dstTravelled)
                     {
                         break;
                     }
                 }
-                float4 color = SAMPLE_TEXTURE2D(_CameraColorTexture, sampler_CameraColorTexture, IN.uv); //当前点原本的颜色
-                float4 cloudColor = float4(lightEnergy, transmittance); //(光照的颜色, 原色保持程度)
-                color.rgb *= cloudColor.a; //透过率越大则原本颜色越能维持
-                color.rgb += cloudColor.rgb; //然后加上光照颜色
-                return color;
+                float3 color = backColor.rgb * transmittance + lightEnergy;
+                return half4(color, 1.0);
             }
             ENDHLSL
         }
