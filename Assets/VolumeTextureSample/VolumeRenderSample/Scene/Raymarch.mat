@@ -43,7 +43,7 @@ Material:
     - _BaseBrightness: 1
     - _DarknessThreshold: 0.19
     - _DensityScale: 0.7
-    - _ForwardScattering: 0.369
+    - _ForwardScattering: 0.32
     - _LightAbsorb: 3
     - _LightSteSize: 0.02
     - _NumLightSteps: 8

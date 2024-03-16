@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ShengFu_Shader_SingleAtmosphere
+  m_Shader: {fileID: 4800000, guid: 54eb95b199a81d24eb0007789f02b122, type: 3}
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _AtmosphereHeight: 80000
+    - _DistanceScale: 1
+    - _MieExtinctionCoef: 1
+    - _MieG: 0.76
+    - _MieScatterCoef: 1
+    - _PlanetRadius: 6371000
+    - _RayleighExtinctionCoeft: 0.85
+    - _RayleighScatterCoef: 1.88
+    m_Colors:
+    - _DensityScaleHeight: {r: 7994, g: 1200, b: 0, a: 0}
+    - _IncomingLight: {r: 4, g: 4, b: 4, a: 4}
+    - _MieSct: {r: 2, g: 2, b: 2, a: 0}
+    - _RayleighSct: {r: 5.8, g: 13.5, b: 33.1, a: 0}
+  m_BuildTextureStacks: []

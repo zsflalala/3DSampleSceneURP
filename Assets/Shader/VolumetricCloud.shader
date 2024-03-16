@@ -36,11 +36,11 @@ Shader "ShengFu/VolumetricCloud"{
             float _CumulusFeather;
 
             // RayMarching
-            float _RayOffsetStrength;
+            float _ShapeMarchLength;
+            float _BlueNoiseEffect;
             float  _StepCount;
-            float _HeightCurveWeight;
             float _Absorption;
-            float _LightAbsorption;
+            // float _LightAbsorption;
 
             // 散射函数
             float4 _PhaseParams;
@@ -58,7 +58,7 @@ Shader "ShengFu/VolumetricCloud"{
             Texture2D _MainTex;
             SamplerState sampler_MainTex;
             TEXTURE2D(_CameraColorTexture);
-	        SamplerState sampler_CameraColorTexture;
+            SamplerState sampler_CameraColorTexture;
             
             sampler2D _BlueNoise;
             TEXTURE2D(_WeatherMap);
@@ -70,14 +70,13 @@ Shader "ShengFu/VolumetricCloud"{
             float _WeatherTiling;
             float _WeatherOffset;
             float _ShapeTiling;
-	        float _DetailTiling;
+            float _DetailTiling;
             float _DensityMultiplier;
             float _ShapeEffect;
+            float _DetailEffect;
             float3 _WindDirection;
             float _WindSpeed;
-            float _DetailNoiseWeight;
             float _CloudDensityAdjust;
-            float _DensityThreshold;
 
             
 
@@ -103,7 +102,7 @@ Shader "ShengFu/VolumetricCloud"{
             float2 squareUV(float2 uv) {
                 float width = _ScreenParams.x;
                 float height =_ScreenParams.y;
-                float scale = 1000;
+                float scale = 10;
                 float x = uv.x * width;
                 float y = uv.y * height;
                 return float2 (x/scale, y/scale);
@@ -233,17 +232,17 @@ Shader "ShengFu/VolumetricCloud"{
             }
 
             //采样云的密度  isCheaply=true时不采样细节纹理
-            float SampleCloudDensity(float3 sphereCenter,float earthRadius,float3 position)
+            float SampleCloudDensity(float3 sphereCenter,float earthRadius,float3 position,bool isCheaply = true)
             {   
 
                 float3 stratusInfo = float3(_StratusRange.xy, _StratusFeather);
                 float3 cumulusInfo = float3(_CumulusRange.xy, _CumulusFeather);
                 float heightFraction = GetHeightFraction(sphereCenter, earthRadius, position, _CloudHeightRange.x, _CloudHeightRange.y);
                 //添加风的影响
-                float3 windDirecton = normalize(_WindDirection);
+                float3 windDirection = normalize(_WindDirection);
                 float  windSpeed = _WindSpeed;
-                float3 wind = windDirecton * windSpeed * _Time.y;
-                position = position + wind * 100;
+                float3 wind = windDirection * windSpeed * _Time.y;
+                float3 windPosition = position + wind * 100;
                 //采样天气纹理，默认1000km平铺， r 密度, g 吸收率, b 云类型(0~1 => 层云~积云)
                 // float2 weatherTexUV = GetWeatherTexUV(dsi.sphereCenter, dsi.position, dsi.weatherTexTiling, dsi.weatherTexRepair);
                 float2 weatherTexUV = position.xz * _WeatherTiling;
@@ -264,9 +263,12 @@ Shader "ShengFu/VolumetricCloud"{
                 {
                     return 0;
                 }
+
+                //云吸收率
+                _Absorption = Interpolation3(0, weatherData.g, 1, _CloudDensityAdjust);
                 
                 //采样基础纹理
-                float4 baseTex = tex3D(_ShapeNoise,position * _ShapeTiling * 0.0001);
+                float4 baseTex = tex3D(_ShapeNoise, windPosition * _ShapeTiling * 0.0001);
                 //构建基础纹理的FBM
                 float baseTexFBM = dot(baseTex.gba, float3(0.5, 0.25, 0.125));
                 //对基础形状添加细节，通过Remap可以不影响基础形状下添加细节
@@ -274,13 +276,25 @@ Shader "ShengFu/VolumetricCloud"{
                 
                 float cloudDensity = baseShape * weatherData.r * cloudTypeDensity;
                 
+                if (cloudDensity > 0 && !isCheaply){
+                    //细节噪声受更强风的影响，添加稍微向上的偏移
+                    windPosition += (windDirection + float3(0, 0.1, 0)) * windSpeed * _Time.y * 0.1;
+                    float3 detailTex = tex3D(_DetailNoise, windPosition * _DetailTiling * 0.0001).rgb;
+                    float detailTexFBM = dot(detailTex, float3(0.5, 0.25, 0.125));
+                    
+                    //根据高度从纤细到波纹的形状进行变化
+                    float detailNoise = detailTexFBM;//lerp(detailTexFBM, 1.0 - detailTexFBM,saturate(heightFraction * 1.0));
+                    //通过使用remap映射细节噪声，可以保留基本形状，在边缘进行变化
+                    cloudDensity = Remap(cloudDensity, detailNoise * _DetailEffect, 1.0, 0.0, 1.0);
+                }
+                
+
                 float density = cloudDensity * _DensityMultiplier * 0.01;
-                density = max(0, density - _DensityThreshold);
                 
                 return density;
             }
 
-            float lightMarching(float sphereCenter,float sphereRadius,float3 position,float3 lightDir, int stepCount = 8){
+            float3 lightMarching(float sphereCenter,float sphereRadius,float3 position,float3 lightDir, int stepCount = 8){
                 float2 dstCloud_light = RayCloudLayerDst(sphereCenter, sphereRadius, _CloudHeightRange.x, _CloudHeightRange.y, position, lightDir, false);
                 float dstInsideCloud = dstCloud_light.y;
 
@@ -291,9 +305,8 @@ Shader "ShengFu/VolumetricCloud"{
                     position += stepVec;
                     totalDensity += max(0, SampleCloudDensity(sphereCenter, sphereRadius, position) * stepSize);
                 }
-                float transmittance = BeerPowder(totalDensity,_LightAbsorption);
-                float3 cloudColor = Interpolation3(_ColorDark.rgb, _ColorCentral.rgb, _ColorBright.rgb, saturate(transmittance), _ColorCentralOffset);
-                float3 lightTransmittance = _DarknessThreshold + (1.0 - _DarknessThreshold) * cloudColor ;
+                float transmittance = BeerPowder(totalDensity,_Absorption);
+                float3 lightTransmittance = _DarknessThreshold + (1.0 - _DarknessThreshold) * transmittance;
                 return lightTransmittance;
             }
 
@@ -318,7 +331,7 @@ Shader "ShengFu/VolumetricCloud"{
             }
 
             half4 Pixel(vertexOutput i): SV_TARGET{
-                half4 backColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                half4 baseColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
                 float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, i.uv);
                 float dstToObj = LinearEyeDepth(depth, _ZBufferParams);
                 
@@ -327,14 +340,14 @@ Shader "ShengFu/VolumetricCloud"{
                 float3 lightDir = normalize(mainLight.direction);
                 float3 cameraPos = GetCameraPositionWS();
 
-                float earthRadius = 6300000;
+                float earthRadius = 6357000.0f;
                 float3 sphereCenter = float3(cameraPos.x, -earthRadius, cameraPos.z); //地球中心坐标, 使水平行走永远不会逃出地球, 高度0为地表
                 float2 dstCloud = RayCloudLayerDst(sphereCenter, earthRadius, _CloudHeightRange.x, _CloudHeightRange.y, cameraPos, viewDir);
                 float dstToCloud = dstCloud.x;
                 float dstInCloud = dstCloud.y;
-                if (dstInCloud <= 0)
+                if (dstInCloud <= 0 || dstToObj <= dstToCloud)
                 {
-                    return backColor;
+                    return baseColor;
                 }
                 float endPos = dstToCloud + dstInCloud;
 
@@ -347,31 +360,61 @@ Shader "ShengFu/VolumetricCloud"{
                 float stepSize = dstInCloud / _StepCount; 
                 float3 stepVec = stepSize * viewDir;
 
-                float buleNoise = tex2Dlod(_BlueNoise,float4(squareUV(i.uv*3),0,0)).r;
-                float dstTravelled = dstToCloud + buleNoise * _RayOffsetStrength;                       
+                float buleNoise = tex2Dlod(_BlueNoise,float4(i.uv,0,0)).r;
+                float dstTravelled = dstToCloud + _ShapeMarchLength * buleNoise * _BlueNoiseEffect;                       
                 float3 lightEnergy = 0;
                 float transmittance = 1.0; 
+
+                // 云测试密度
+                float densityTest = 0;
+                float densityPrevious = 0;
+                int   densitySampleCount_zero = 0;
                 
                 [unroll(12)]
                 for(int i = 0; i < _StepCount; i++){
-                    currentPoint += stepVec;
-                    float density = SampleCloudDensity(sphereCenter, earthRadius, currentPoint);
-                    if (density * stepSize > 0.01){
-                        float lightTransmittance = lightMarching(sphereCenter, earthRadius, currentPoint, lightDir);
-                        lightEnergy += density * stepSize * transmittance * lightTransmittance * phaseVal;
-                        transmittance *= Beer(density * stepSize,_Absorption);
-                        if (transmittance < 0.01){
+                    if (densityTest = 0){
+                        dstTravelled += _ShapeMarchLength * 2;
+                        currentPoint = cameraPos + viewDir * dstTravelled;
+                        if (dstToObj <= dstTravelled || endPos <= dstTravelled){
                             break;
                         }
+                        densityTest = SampleCloudDensity(sphereCenter, earthRadius, currentPoint);
+                        if (densityTest > 0){
+                            dstTravelled -= _ShapeMarchLength;
+                        }
                     }
-                    dstTravelled += stepSize;
-                    if (endPos <= dstTravelled)
-                    {
-                        break;
+                    else{
+                        currentPoint = cameraPos + viewDir * dstTravelled;
+                        float cloudDensity = SampleCloudDensity(sphereCenter, earthRadius, currentPoint,false);
+                        if (cloudDensity == 0 && densityPrevious == 0){
+                            densitySampleCount_zero++;
+                            //累计检测到指定数值，切换到大步进
+                            if (densitySampleCount_zero > 8){
+                                densityTest = 0;
+                                densitySampleCount_zero = 0;
+                                continue;
+                            }
+                        }
+                        float intervalDensity = cloudDensity * _ShapeMarchLength;
+                        if (intervalDensity > 0.01){
+                            float3 lightTransmittance = lightMarching(sphereCenter, earthRadius, currentPoint, lightDir);
+                            float3 cloudColor = Interpolation3(_ColorDark.rgb, _ColorCentral.rgb, _ColorBright.rgb, saturate(lightTransmittance), _ColorCentralOffset) * mainLight.color;
+                            lightEnergy += intervalDensity * transmittance * cloudColor * phaseVal;
+                            transmittance *= Beer(intervalDensity,_Absorption);
+                            if (transmittance < 0.01){
+                                break;
+                            }
+                        }
+                        dstTravelled += _ShapeMarchLength;
+                        if (dstToObj <= dstTravelled || endPos <= dstTravelled)
+                        {
+                            break;
+                        }
+                        densityPrevious = intervalDensity;
                     }
                 }
-                float3 color = backColor.rgb * transmittance + lightEnergy;
-                return half4(color, 1.0);
+                float3 color = baseColor.rgb + lightEnergy;
+                return half4(color, transmittance);
             }
             ENDHLSL
         }

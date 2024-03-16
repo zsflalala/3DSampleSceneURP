@@ -26,7 +26,6 @@ public class CustomRenderPass: ScriptableRenderPass{
         command.ReleaseTemporaryRT(tempRT.id);
     }
     public void Render(CommandBuffer command, ref RenderingData data){
-
         if(parameters.IsActive()){
             parameters.load(mat, ref data);
             RenderTextureDescriptor opaqueDesc = data.cameraData.cameraTargetDescriptor;

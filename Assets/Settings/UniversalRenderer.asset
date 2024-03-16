@@ -1,20 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-4190089485386440467
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 578ffe956cde8b84f9d33fdeebc3b71e, type: 3}
-  m_Name: CustomRenderFeature
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  shader: {fileID: 4800000, guid: 028cbb75fc92e1f4db5014d439cc3d4d, type: 3}
-  evt: 550
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30,10 +15,8 @@ MonoBehaviour:
   debugShaders:
     debugReplacementPS: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7, type: 3}
   m_RendererFeatures:
-  - {fileID: -4190089485386440467}
-  - {fileID: 8870865607364484538}
-  - {fileID: 7665994161380827322}
-  m_RendererFeatureMap: ed207126d0cfd9c5ba9d302145a51b7bbaa052d71215636a
+  - {fileID: 2311115404749258129}
+  m_RendererFeatureMap: 913d033f37bb1220
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -65,13 +48,13 @@ MonoBehaviour:
     zFailOperation: 0
   m_ShadowTransparentReceive: 1
   m_RenderingMode: 0
-  m_DepthPrimingMode: 0
+  m_DepthPrimingMode: 1
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_ClusteredRendering: 0
   m_TileSize: 32
   m_IntermediateTextureMode: 1
---- !u!114 &7665994161380827322
+--- !u!114 &133697919332596675
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -80,14 +63,28 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 502af4c84b2b06446b7a4af56121c93a, type: 3}
-  m_Name: VolumetricLightScattering
+  m_Script: {fileID: 11500000, guid: c2a598ca769a7b34aa0b8031f28a59ec, type: 3}
+  m_Name: AtmosphereRenderFeature
   m_EditorClassIdentifier: 
   m_Active: 0
-  settings:
-    resolutionScale: 0.335
-    intensity: 0.169
-    blurWidth: 0.387
+  shader: {fileID: 4800000, guid: ccfa7cb01d222d04bb989e13a43dc146, type: 3}
+  evt: 600
+  matInstance: {fileID: 0}
+--- !u!114 &2311115404749258129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 578ffe956cde8b84f9d33fdeebc3b71e, type: 3}
+  m_Name: CustomRenderFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 028cbb75fc92e1f4db5014d439cc3d4d, type: 3}
+  evt: 400
 --- !u!114 &8870865607364484538
 MonoBehaviour:
   m_ObjectHideFlags: 0
